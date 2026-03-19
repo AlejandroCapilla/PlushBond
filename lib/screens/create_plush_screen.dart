@@ -42,6 +42,7 @@ class _CreatePlushScreenState extends ConsumerState<CreatePlushScreen> {
     setState(() => _isLoading = true);
     final storage = ref.read(storageServiceProvider);
     final firestore = ref.read(firestoreServiceProvider);
+    final functions = ref.read(functionsServiceProvider);
     final authUser = ref.read(authServiceProvider).currentUser;
 
     if (authUser == null) {
@@ -55,19 +56,24 @@ class _CreatePlushScreenState extends ConsumerState<CreatePlushScreen> {
     }
 
     try {
-      final imageUrl = await storage.uploadPlushImage(authUser.uid, _image!);
+      final plushId = const Uuid().v4();
+      final imageUrl = await storage.uploadPlushImage(plushId, _image!);
       
       final plush = PlushModel(
-        plushId: const Uuid().v4(),
+        plushId: plushId,
         ownerA: authUser.uid,
         imageOriginalUrl: imageUrl,
-        image2DUrl: imageUrl, // Placeholder for 2D transform
+        image2DUrl: null,
         name: _nameController.text,
         createdAt: DateTime.now(),
         inviteCode: _generateInviteCode(),
       );
 
       await firestore.createPlush(plush);
+
+      // Trigger the 2D transformation
+      await functions.transformPlushImage(plushId);
+
       if (mounted) Navigator.pop(context);
     } catch (e) {
       if (mounted) {

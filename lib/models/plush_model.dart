@@ -5,7 +5,7 @@ class PlushModel {
   final String ownerA;
   final String? ownerB;
   final String imageOriginalUrl;
-  final String image2DUrl;
+  final String? image2DUrl;
   final String name;
   final int level;
   final double hunger; // 0-100
@@ -23,7 +23,7 @@ class PlushModel {
     required this.ownerA,
     this.ownerB,
     required this.imageOriginalUrl,
-    required this.image2DUrl,
+    this.image2DUrl,
     required this.name,
     this.level = 1,
     this.hunger = 100.0,
@@ -64,7 +64,7 @@ class PlushModel {
       ownerA: map['ownerA'] ?? '',
       ownerB: map['ownerB'],
       imageOriginalUrl: map['imageOriginalUrl'] ?? '',
-      image2DUrl: map['image2DUrl'] ?? '',
+      image2DUrl: map['image2DUrl'],
       name: map['name'] ?? '',
       level: map['level'] ?? 1,
       hunger: (map['hunger'] ?? 100.0).toDouble(),
@@ -81,6 +81,8 @@ class PlushModel {
 
   PlushModel copyWith({
     String? ownerB,
+    String? image2DUrl,
+    String? name,
     double? hunger,
     double? happiness,
     double? energy,
@@ -95,8 +97,8 @@ class PlushModel {
       ownerA: this.ownerA,
       ownerB: ownerB ?? this.ownerB,
       imageOriginalUrl: this.imageOriginalUrl,
-      image2DUrl: this.image2DUrl,
-      name: this.name,
+      image2DUrl: image2DUrl ?? this.image2DUrl,
+      name: name ?? this.name,
       level: level ?? this.level,
       hunger: hunger ?? this.hunger,
       happiness: happiness ?? this.happiness,

@@ -4,11 +4,13 @@ import 'package:flutter_riverpod/legacy.dart';
 import '../services/auth_service.dart';
 import '../services/firestore_service.dart';
 import '../services/storage_service.dart';
+import '../services/functions_service.dart';
 import '../models/user_model.dart';
 
 final authServiceProvider = Provider((ref) => AuthService());
 final firestoreServiceProvider = Provider((ref) => FirestoreService());
 final storageServiceProvider = Provider((ref) => StorageService());
+final functionsServiceProvider = Provider((ref) => FunctionsService());
 
 final authStateProvider = StreamProvider<User?>((ref) {
   return ref.watch(authServiceProvider).authStateChanges;

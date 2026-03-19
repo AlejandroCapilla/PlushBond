@@ -53,7 +53,7 @@ class HomeScreen extends ConsumerWidget {
                 child: Hero(
                   tag: 'plush',
                   child: Image.network(
-                    plush.image2DUrl,
+                    plush.image2DUrl ?? plush.imageOriginalUrl,
                     height: 250,
                     width: 250,
                     fit: BoxFit.contain,

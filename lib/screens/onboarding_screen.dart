@@ -20,17 +20,17 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
     {
       'title': 'Capture Reality',
       'description': 'Take a photo of your favorite real-life plush toy.',
-      'image': 'https://illustrations.popsy.co/pastel/taking-a-photo.svg',
+      'image': 'assets/images/onboarding_1.png',
     },
     {
       'title': 'Digital Magic',
       'description': 'Watch your plush come to life as a cute 2D digital companion.',
-      'image': 'https://illustrations.popsy.co/pastel/cat-sitting-on-blocks.svg',
+      'image': 'assets/images/onboarding_2.png',
     },
     {
       'title': 'Shared Care',
       'description': 'Invite your partner and care for your companion together daily.',
-      'image': 'https://illustrations.popsy.co/pastel/friendship.svg',
+      'image': 'assets/images/onboarding_3.png',
     },
   ];
 
@@ -49,7 +49,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Image.network(_pages[index]['image']!, height: 300)
+                    Image.asset(_pages[index]['image']!, height: 300)
                         .animate()
                         .fade(duration: 500.ms)
                         .slideY(begin: 0.2, end: 0),
