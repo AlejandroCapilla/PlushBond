@@ -6,7 +6,7 @@ class AppTheme {
   static const Color secondaryColor = Color(0xFFFFDAC1); // Peach
   static const Color tertiaryColor = Color(0xFFE2F0CB); // Mint
   static const Color accentColor = Color(0xFFB5EAD7); // Green Pastel
-  static const Color backgroundColor = Color(0xFFFFF9F9); // Very light pink/white
+  static const Color backgroundColor = Color(0xFFFFFFFF); // Very light pink/white
   static const Color cardColor = Colors.white;
   static const Color textColor = Color(0xFF4A4A4A);
 
