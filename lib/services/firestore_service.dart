@@ -22,6 +22,10 @@ class FirestoreService {
     await _db.collection('users').doc(uid).update({'partnerId': partnerId});
   }
 
+  Future<void> updateFcmToken(String uid, String fcmToken) async {
+    await _db.collection('users').doc(uid).update({'fcmToken': fcmToken});
+  }
+
   // Plush Operations
   Future<void> createPlush(PlushModel plush) async {
     await _db.collection('plush').doc(plush.plushId).set(plush.toMap());
@@ -49,6 +53,18 @@ class FirestoreService {
 
   Future<void> updatePlush(PlushModel plush) async {
     await _db.collection('plush').doc(plush.plushId).update(plush.toMap());
+  }
+
+  Future<void> updateNote(String plushId, String uid, PlushNote note) async {
+    await _db.collection('plush').doc(plushId).update({
+      'notes.$uid': note.toMap(),
+    });
+  }
+
+  Future<void> markNoteAsRead(String plushId, String partnerUid) async {
+    await _db.collection('plush').doc(plushId).update({
+      'notes.$partnerUid.readByPartner': true,
+    });
   }
 
   Stream<PlushModel?> streamPlush(String plushId) {

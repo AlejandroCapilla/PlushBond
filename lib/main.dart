@@ -35,6 +35,13 @@ class PlushBondApp extends ConsumerWidget {
     final authState = ref.watch(authStateProvider);
     final showOnboarding = ref.watch(onboardingProvider);
 
+    // Listen to auth state and update FCM token when user is logged in
+    ref.listen(authStateProvider, (previous, next) {
+      if (next.hasValue && next.value != null) {
+        ref.read(notificationServiceProvider).updateUserFcmToken(next.value!.uid);
+      }
+    });
+
     return MaterialApp(
       title: 'PlushBond',
       debugShowCheckedModeBanner: false,

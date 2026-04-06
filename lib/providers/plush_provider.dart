@@ -26,35 +26,71 @@ class PlushNotifier extends StateNotifier<PlushModel?> {
     _subscription?.cancel();
     _subscription = _firestore.streamPlushForUser(_uid!).listen((plush) {
       if (plush != null) {
+        bool needsUpdate = false;
+        PlushModel processedPlush = plush;
+
+        // Calculate decay if it's the first time or if significant time has passed
         if (state == null) {
-          // First time we get a plush, start the decay timer
+          processedPlush = _calculateDecay(plush);
+          if (processedPlush != plush) {
+            needsUpdate = true;
+          }
           _startDecayTimer();
         }
-        state = plush;
+
+        state = processedPlush;
+
+        if (needsUpdate) {
+          _syncToFirestore(processedPlush);
+        }
       } else {
         state = null;
         _decayTimer?.cancel();
       }
     });
   }
+  
+  PlushModel _calculateDecay(PlushModel plush) {
+    final now = DateTime.now();
+    final elapsed = now.difference(plush.lastUpdate);
+    final hoursPassed = elapsed.inSeconds / 3600.0;
+
+    if (hoursPassed < 0.01) return plush; // Avoid unnecessary updates for very small intervals
+
+    // Decay rates per hour
+    const hungerRate = 4.0;
+    const energyRate = 3.5;
+    const happinessRate = 3.0;
+
+    final newHunger = (plush.hunger - (hungerRate * hoursPassed)).clamp(0.0, 100.0);
+    final newEnergy = (plush.energy - (energyRate * hoursPassed)).clamp(0.0, 100.0);
+    final newHappiness = (plush.happiness - (happinessRate * hoursPassed)).clamp(0.0, 100.0);
+
+    return plush.copyWith(
+      hunger: newHunger,
+      energy: newEnergy,
+      happiness: newHappiness,
+      lastUpdate: now,
+    );
+  }
+
+  Future<void> _syncToFirestore(PlushModel plush) async {
+    await _firestore.updatePlush(plush);
+  }
 
 
   void _startDecayTimer() {
     _decayTimer?.cancel();
+    // Check for decay every 5 minutes while the app is open
     _decayTimer = Timer.periodic(const Duration(minutes: 5), (timer) {
       if (state != null) {
-        // Simple decay logic: hunger and energy decrease over time
-        final newHunger = (state!.hunger - 0.5).clamp(0.0, 100.0);
-        final newEnergy = (state!.energy - 0.3).clamp(0.0, 100.0);
-        final newHappiness = (state!.happiness - 0.2).clamp(0.0, 100.0);
-        
-        state = state!.copyWith(
-          hunger: newHunger,
-          energy: newEnergy,
-          happiness: newHappiness,
-        );
-        
-        // Optionally sync to Firestore occasionally or on important changes
+        final decayed = _calculateDecay(state!);
+        if (decayed != state) {
+          state = decayed;
+          // Sync to firestore every hour or so, or just rely on manual interactions
+          // For now, let's sync local state, and it will sync to firestore on interaction
+          // or next time the app opens.
+        }
       }
     });
   }
@@ -83,6 +119,7 @@ class PlushNotifier extends StateNotifier<PlushModel?> {
       hunger: (state!.hunger + (hungerAdd ?? 0)).clamp(0.0, 100.0),
       happiness: (state!.happiness + (happinessAdd ?? 0) + bonus).clamp(0.0, 100.0),
       energy: (state!.energy + (energyAdd ?? 0)).clamp(0.0, 100.0),
+      lastUpdate: now,
       lastInteractionA: isOwnerA ? now : state!.lastInteractionA,
       lastInteractionB: !isOwnerA ? now : state!.lastInteractionB,
     );
@@ -96,11 +133,27 @@ class PlushNotifier extends StateNotifier<PlushModel?> {
   }
 
   Future<void> play() async {
-    await _applyInteraction(happinessAdd: 15, energyAdd: -10);
+    await _applyInteraction(happinessAdd: 20, energyAdd: -10);
   }
 
   Future<void> cuddle() async {
-    await _applyInteraction(happinessAdd: 10);
+    await _applyInteraction(happinessAdd: 10, energyAdd: 10);
+  }
+
+  Future<void> sendNote(String text) async {
+    if (state == null || _uid == null) return;
+    final now = DateTime.now();
+    final note = PlushNote(
+      text: text,
+      timestamp: now,
+      readByPartner: false,
+    );
+    await _firestore.updateNote(state!.plushId, _uid!, note);
+  }
+
+  Future<void> readNote(String partnerUid) async {
+    if (state == null) return;
+    await _firestore.markNoteAsRead(state!.plushId, partnerUid);
   }
 
   @override

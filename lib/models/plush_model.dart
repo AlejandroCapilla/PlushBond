@@ -1,5 +1,45 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
+class PlushNote {
+  final String text;
+  final DateTime timestamp;
+  final bool readByPartner;
+
+  PlushNote({
+    required this.text,
+    required this.timestamp,
+    required this.readByPartner,
+  });
+
+  Map<String, dynamic> toMap() {
+    return {
+      'text': text,
+      'timestamp': Timestamp.fromDate(timestamp),
+      'readByPartner': readByPartner,
+    };
+  }
+
+  factory PlushNote.fromMap(Map<String, dynamic> map) {
+    return PlushNote(
+      text: map['text'] ?? '',
+      timestamp: (map['timestamp'] as Timestamp).toDate(),
+      readByPartner: map['readByPartner'] ?? false,
+    );
+  }
+
+  PlushNote copyWith({
+    String? text,
+    DateTime? timestamp,
+    bool? readByPartner,
+  }) {
+    return PlushNote(
+      text: text ?? this.text,
+      timestamp: timestamp ?? this.timestamp,
+      readByPartner: readByPartner ?? this.readByPartner,
+    );
+  }
+}
+
 class PlushModel {
   final String plushId;
   final String ownerA;
@@ -12,11 +52,13 @@ class PlushModel {
   final double happiness; // 0-100
   final double energy; // 0-100
   final DateTime createdAt;
+  final DateTime lastUpdate;
   final DateTime? lastInteractionA;
   final DateTime? lastInteractionB;
   final String inviteCode;
   final bool isPremium;
   final List<String> customizations;
+  final Map<String, PlushNote> notes;
 
   PlushModel({
     required this.plushId,
@@ -30,11 +72,13 @@ class PlushModel {
     this.happiness = 100.0,
     this.energy = 100.0,
     required this.createdAt,
+    required this.lastUpdate,
     this.lastInteractionA,
     this.lastInteractionB,
     required this.inviteCode,
     this.isPremium = false,
     this.customizations = const [],
+    this.notes = const {},
   });
 
   Map<String, dynamic> toMap() {
@@ -50,15 +94,22 @@ class PlushModel {
       'happiness': happiness,
       'energy': energy,
       'createdAt': Timestamp.fromDate(createdAt),
+      'lastUpdate': Timestamp.fromDate(lastUpdate),
       'lastInteractionA': lastInteractionA != null ? Timestamp.fromDate(lastInteractionA!) : null,
       'lastInteractionB': lastInteractionB != null ? Timestamp.fromDate(lastInteractionB!) : null,
       'inviteCode': inviteCode,
       'isPremium': isPremium,
       'customizations': customizations,
+      'notes': notes.map((key, value) => MapEntry(key, value.toMap())),
     };
   }
 
   factory PlushModel.fromMap(Map<String, dynamic> map, String id) {
+    final notesMap = (map['notes'] as Map<String, dynamic>?)?.map(
+          (key, value) => MapEntry(key, PlushNote.fromMap(value as Map<String, dynamic>)),
+        ) ??
+        {};
+
     return PlushModel(
       plushId: id,
       ownerA: map['ownerA'] ?? '',
@@ -71,11 +122,13 @@ class PlushModel {
       happiness: (map['happiness'] ?? 100.0).toDouble(),
       energy: (map['energy'] ?? 100.0).toDouble(),
       createdAt: (map['createdAt'] as Timestamp).toDate(),
+      lastUpdate: (map['lastUpdate'] as Timestamp? ?? map['createdAt'] as Timestamp).toDate(),
       lastInteractionA: (map['lastInteractionA'] as Timestamp?)?.toDate(),
       lastInteractionB: (map['lastInteractionB'] as Timestamp?)?.toDate(),
       inviteCode: map['inviteCode'] ?? '',
       isPremium: map['isPremium'] ?? false,
       customizations: List<String>.from(map['customizations'] ?? []),
+      notes: notesMap,
     );
   }
 
@@ -87,10 +140,12 @@ class PlushModel {
     double? happiness,
     double? energy,
     int? level,
+    DateTime? lastUpdate,
     DateTime? lastInteractionA,
     DateTime? lastInteractionB,
     bool? isPremium,
     List<String>? customizations,
+    Map<String, PlushNote>? notes,
   }) {
     return PlushModel(
       plushId: this.plushId,
@@ -104,11 +159,13 @@ class PlushModel {
       happiness: happiness ?? this.happiness,
       energy: energy ?? this.energy,
       createdAt: this.createdAt,
+      lastUpdate: lastUpdate ?? this.lastUpdate,
       lastInteractionA: lastInteractionA ?? this.lastInteractionA,
       lastInteractionB: lastInteractionB ?? this.lastInteractionB,
       inviteCode: this.inviteCode,
       isPremium: isPremium ?? this.isPremium,
       customizations: customizations ?? this.customizations,
+      notes: notes ?? this.notes,
     );
   }
 }

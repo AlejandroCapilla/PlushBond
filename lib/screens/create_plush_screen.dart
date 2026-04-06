@@ -70,6 +70,7 @@ class _CreatePlushScreenState extends ConsumerState<CreatePlushScreen> {
         image2DUrl: null,
         name: _nameController.text,
         createdAt: DateTime.now(),
+        lastUpdate: DateTime.now(),
         inviteCode: _generateInviteCode(),
       );
 

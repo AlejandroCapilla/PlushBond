@@ -5,6 +5,7 @@ class UserModel {
   final String email;
   final String displayName;
   final String? partnerId;
+  final String? fcmToken;
   final DateTime createdAt;
 
   UserModel({
@@ -12,6 +13,7 @@ class UserModel {
     required this.email,
     required this.displayName,
     this.partnerId,
+    this.fcmToken,
     required this.createdAt,
   });
 
@@ -21,6 +23,7 @@ class UserModel {
       'email': email,
       'displayName': displayName,
       'partnerId': partnerId,
+      'fcmToken': fcmToken,
       'createdAt': Timestamp.fromDate(createdAt),
     };
   }
@@ -31,6 +34,7 @@ class UserModel {
       email: map['email'] ?? '',
       displayName: map['displayName'] ?? '',
       partnerId: map['partnerId'],
+      fcmToken: map['fcmToken'],
       createdAt: (map['createdAt'] as Timestamp).toDate(),
     );
   }
@@ -40,6 +44,7 @@ class UserModel {
     String? email,
     String? displayName,
     String? partnerId,
+    String? fcmToken,
     DateTime? createdAt,
   }) {
     return UserModel(
@@ -47,6 +52,7 @@ class UserModel {
       email: email ?? this.email,
       displayName: displayName ?? this.displayName,
       partnerId: partnerId ?? this.partnerId,
+      fcmToken: fcmToken ?? this.fcmToken,
       createdAt: createdAt ?? this.createdAt,
     );
   }
