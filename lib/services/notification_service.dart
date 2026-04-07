@@ -37,8 +37,15 @@ class NotificationService {
     await requestPermissions();
     String? token = await getFcmToken();
     if (token != null) {
-      await _firestoreService.updateFcmToken(uid, token);
-      print('FCM Token updated for user $uid: $token');
+      final plush = await _firestoreService.getPlushForUser(uid);
+      if (plush != null) {
+        final user = await _firestoreService.getUser(uid);
+        if (user != null) {
+          bool isOwnerA = plush.ownerA == uid;
+          await _firestoreService.updatePlushFcmInfo(plush.plushId, isOwnerA, token, user.displayName);
+          print('FCM Token and name updated in plush for user $uid');
+        }
+      }
     }
   }
 }

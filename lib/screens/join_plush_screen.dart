@@ -44,6 +44,9 @@ class _JoinPlushScreenState extends ConsumerState<JoinPlushScreen> {
         await firestore.updatePartnerId(authUser.uid, plush.ownerA);
         await firestore.updatePartnerId(plush.ownerA, authUser.uid);
         
+        // Update FCM token since now the user has a plush document
+        await ref.read(notificationServiceProvider).updateUserFcmToken(authUser.uid);
+        
         if (mounted) Navigator.pop(context);
       } else {
         throw 'Invalid invite code';

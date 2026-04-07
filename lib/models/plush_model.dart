@@ -44,6 +44,10 @@ class PlushModel {
   final String plushId;
   final String ownerA;
   final String? ownerB;
+  final String? nameA;
+  final String? nameB;
+  final String? fcmTokenA;
+  final String? fcmTokenB;
   final String imageOriginalUrl;
   final String? image2DUrl;
   final String name;
@@ -64,6 +68,10 @@ class PlushModel {
     required this.plushId,
     required this.ownerA,
     this.ownerB,
+    this.nameA,
+    this.nameB,
+    this.fcmTokenA,
+    this.fcmTokenB,
     required this.imageOriginalUrl,
     this.image2DUrl,
     required this.name,
@@ -86,6 +94,10 @@ class PlushModel {
       'plushId': plushId,
       'ownerA': ownerA,
       'ownerB': ownerB,
+      'nameA': nameA,
+      'nameB': nameB,
+      'fcmTokenA': fcmTokenA,
+      'fcmTokenB': fcmTokenB,
       'imageOriginalUrl': imageOriginalUrl,
       'image2DUrl': image2DUrl,
       'name': name,
@@ -114,6 +126,10 @@ class PlushModel {
       plushId: id,
       ownerA: map['ownerA'] ?? '',
       ownerB: map['ownerB'],
+      nameA: map['nameA'],
+      nameB: map['nameB'],
+      fcmTokenA: map['fcmTokenA'],
+      fcmTokenB: map['fcmTokenB'],
       imageOriginalUrl: map['imageOriginalUrl'] ?? '',
       image2DUrl: map['image2DUrl'],
       name: map['name'] ?? '',
@@ -134,6 +150,10 @@ class PlushModel {
 
   PlushModel copyWith({
     String? ownerB,
+    String? nameA,
+    String? nameB,
+    String? fcmTokenA,
+    String? fcmTokenB,
     String? image2DUrl,
     String? name,
     double? hunger,
@@ -151,6 +171,10 @@ class PlushModel {
       plushId: this.plushId,
       ownerA: this.ownerA,
       ownerB: ownerB ?? this.ownerB,
+      nameA: nameA ?? this.nameA,
+      nameB: nameB ?? this.nameB,
+      fcmTokenA: fcmTokenA ?? this.fcmTokenA,
+      fcmTokenB: fcmTokenB ?? this.fcmTokenB,
       imageOriginalUrl: this.imageOriginalUrl,
       image2DUrl: image2DUrl ?? this.image2DUrl,
       name: name ?? this.name,

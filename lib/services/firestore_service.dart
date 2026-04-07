@@ -22,8 +22,11 @@ class FirestoreService {
     await _db.collection('users').doc(uid).update({'partnerId': partnerId});
   }
 
-  Future<void> updateFcmToken(String uid, String fcmToken) async {
-    await _db.collection('users').doc(uid).update({'fcmToken': fcmToken});
+  Future<void> updatePlushFcmInfo(String plushId, bool isOwnerA, String token, String name) async {
+    await _db.collection('plush').doc(plushId).update({
+      if (isOwnerA) 'fcmTokenA': token else 'fcmTokenB': token,
+      if (isOwnerA) 'nameA': name else 'nameB': name,// tal vez se pueda quitar si no se quiere actualizar el nombre cada inicio de app (aunque no esta mal, igual tiene que actualizar el token fcm)
+    });
   }
 
   // Plush Operations

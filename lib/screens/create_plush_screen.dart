@@ -78,6 +78,9 @@ class _CreatePlushScreenState extends ConsumerState<CreatePlushScreen> {
 
       // Trigger the 2D transformation
       await functions.transformPlushImage(plushId);
+      
+      // Update FCM token since now the user has a plush document
+      await ref.read(notificationServiceProvider).updateUserFcmToken(authUser.uid);
 
       if (mounted) setState(() => _isFinished = true);
       await Future.delayed(const Duration(milliseconds: 600));
