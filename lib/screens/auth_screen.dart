@@ -55,12 +55,12 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              const Text(
+              Text(
                 'PlushBond',
                 style: TextStyle(
                   fontSize: 48,
                   fontWeight: FontWeight.bold,
-                  color: Color(0xFFFFB7B2),
+                  color: Theme.of(context).primaryColor,
                 ),
               ),
               const SizedBox(height: 10),

@@ -46,6 +46,25 @@ dependencies:
   flutter_animate: ^4.5.2
   shared_preferences: ^2.5.4
   uuid: ^4.5.2
+  flutter_launcher_icons: ^0.14.4
+  flutter_native_splash: ^2.4.0
+
+flutter_launcher_icons:
+  android: "launcher_icon"
+  ios: true
+  image_path: "assets/launcher_icon.png"
+  adaptive_icon_background: "assets/layer1.png"
+  adaptive_icon_foreground: "assets/layer2.png"
+
+flutter_native_splash:
+  android: true
+  ios: true
+  color: "#bfa9cd"
+  image: assets/splash.png
+
+  android_12:
+    image: assets/splash.png
+    color: "#bfa9cd"
 
 dev_dependencies:
   flutter_test:

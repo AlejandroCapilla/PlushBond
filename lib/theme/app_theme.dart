@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 class AppTheme {
-  static const Color primaryColor = Color(0xFFFFB7B2); // Soft Pink
+  static const Color primaryColor = Color(0xFFbfa9cd); // Soft Pink
   static const Color secondaryColor = Color(0xFFFFDAC1); // Peach
   static const Color tertiaryColor = Color(0xFFE2F0CB); // Mint
   static const Color accentColor = Color(0xFFB5EAD7); // Green Pastel
