@@ -190,6 +190,37 @@ class HomeScreen extends ConsumerWidget {
                           .scale(duration: 300.ms, curve: Curves.bounceIn),
                       ),
                     ),
+
+                  // Touch Button
+                  Positioned(
+                    bottom: 0,
+                    left: -20,
+                    child: InkWell(
+                      onTap: () {
+                        HapticFeedback.mediumImpact();
+                        ref.read(plushProvider.notifier).squeeze();
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(content: Text('Touch sent!')),
+                        );
+                      },
+                      borderRadius: BorderRadius.circular(30),
+                      child: Container(
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: AppTheme.primaryColor,
+                          shape: BoxShape.circle,
+                          boxShadow: [
+                            BoxShadow(
+                              color: AppTheme.primaryColor.withOpacity(0.3),
+                              blurRadius: 8,
+                              offset: const Offset(0, 4),
+                            ),
+                          ],
+                        ),
+                        child: const Icon(Icons.touch_app, color: Colors.white, size: 28),
+                      ),
+                    ),
+                  ),
                 ],
               ),
             ),
