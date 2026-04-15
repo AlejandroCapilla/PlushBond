@@ -132,7 +132,7 @@ class PlushNotifier extends StateNotifier<PlushModel?> {
   }
 
   Future<void> feed() async {
-    await _applyInteraction(hungerAdd: 20);
+    await _applyInteraction(hungerAdd: 20, energyAdd: 10);
   }
 
   Future<void> play() async {

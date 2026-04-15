@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../providers/auth_provider.dart';
 import '../models/user_model.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 class AuthScreen extends ConsumerStatefulWidget {
   const AuthScreen({super.key});
@@ -35,10 +36,47 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
         );
         await firestoreService.createUser(newUser);
       }
+    } on FirebaseAuthException catch (e) {
+      if (mounted) {
+        String errorMessage = 'An authentication error occurred.';
+        switch (e.code) {
+          case 'user-not-found':
+            errorMessage = 'No account found with this email.';
+            break;
+          case 'wrong-password':
+          case 'invalid-credential':
+            errorMessage = 'Incorrect email or password.';
+            break;
+          case 'email-already-in-use':
+            errorMessage = 'This email address is already in use.';
+            break;
+          case 'weak-password':
+            errorMessage = 'The chosen password is too weak.';
+            break;
+          case 'invalid-email':
+            errorMessage = 'The email address is invalid.';
+            break;
+          case 'user-disabled':
+            errorMessage = 'This account has been disabled.';
+            break;
+          case 'too-many-requests':
+            errorMessage = 'Too many attempts. Please try again later.';
+            break;
+          case 'operation-not-allowed':
+            errorMessage = 'This sign-in method is not enabled.';
+            break;
+          case 'network-request-failed':
+            errorMessage = 'Network error. Please check your connection and try again.';
+            break;
+        }
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(errorMessage)),
+        );
+      }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(e.toString())),
+          SnackBar(content: Text('An unexpected error occurred. Please try again.')),
         );
       }
     } finally {
