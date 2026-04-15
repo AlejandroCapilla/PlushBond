@@ -104,7 +104,7 @@ class PlushNotifier extends StateNotifier<PlushModel?> {
   }
 
   Future<void> _applyInteraction(
-      {double? hungerAdd, double? happinessAdd, double? energyAdd}) async {
+      {double? hungerAdd, double? happinessAdd, double? energyAdd, int xpAdd = 0}) async {
     if (state == null || _uid == null) return;
 
     final now = DateTime.now();
@@ -122,6 +122,7 @@ class PlushNotifier extends StateNotifier<PlushModel?> {
       hunger: (state!.hunger + (hungerAdd ?? 0)).clamp(0.0, 100.0),
       happiness: (state!.happiness + (happinessAdd ?? 0) + bonus).clamp(0.0, 100.0),
       energy: (state!.energy + (energyAdd ?? 0)).clamp(0.0, 100.0),
+      xp: state!.xp + xpAdd,
       lastUpdate: now,
       lastInteractionA: isOwnerA ? now : state!.lastInteractionA,
       lastInteractionB: !isOwnerA ? now : state!.lastInteractionB,
@@ -132,15 +133,15 @@ class PlushNotifier extends StateNotifier<PlushModel?> {
   }
 
   Future<void> feed() async {
-    await _applyInteraction(hungerAdd: 20, energyAdd: 10);
+    await _applyInteraction(hungerAdd: 20, energyAdd: 10, xpAdd: 15);
   }
 
   Future<void> play() async {
-    await _applyInteraction(happinessAdd: 20, energyAdd: -10);
+    await _applyInteraction(happinessAdd: 20, energyAdd: -10, xpAdd: 15);
   }
 
   Future<void> cuddle() async {
-    await _applyInteraction(happinessAdd: 10, energyAdd: 10);
+    await _applyInteraction(happinessAdd: 10, energyAdd: 10, xpAdd: 15);
   }
 
   Future<void> sendNote(String text) async {

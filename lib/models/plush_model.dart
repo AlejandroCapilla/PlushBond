@@ -1,3 +1,4 @@
+import 'dart:math';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 class PlushNote {
@@ -51,7 +52,8 @@ class PlushModel {
   final String imageOriginalUrl;
   final String? image2DUrl;
   final String name;
-  final int level;
+  final int xp;
+  int get level => (sqrt(xp / 25)).floor() + 1;
   final double hunger; // 0-100
   final double happiness; // 0-100
   final double energy; // 0-100
@@ -75,7 +77,7 @@ class PlushModel {
     required this.imageOriginalUrl,
     this.image2DUrl,
     required this.name,
-    this.level = 1,
+    this.xp = 0,
     this.hunger = 100.0,
     this.happiness = 100.0,
     this.energy = 100.0,
@@ -101,7 +103,7 @@ class PlushModel {
       'imageOriginalUrl': imageOriginalUrl,
       'image2DUrl': image2DUrl,
       'name': name,
-      'level': level,
+      'xp': xp,
       'hunger': hunger,
       'happiness': happiness,
       'energy': energy,
@@ -133,7 +135,7 @@ class PlushModel {
       imageOriginalUrl: map['imageOriginalUrl'] ?? '',
       image2DUrl: map['image2DUrl'],
       name: map['name'] ?? '',
-      level: map['level'] ?? 1,
+      xp: map['xp'] ?? (map['level'] != null ? pow((map['level'] as num) - 1, 2) * 25 : 0).toInt(),
       hunger: (map['hunger'] ?? 100.0).toDouble(),
       happiness: (map['happiness'] ?? 100.0).toDouble(),
       energy: (map['energy'] ?? 100.0).toDouble(),
@@ -159,7 +161,7 @@ class PlushModel {
     double? hunger,
     double? happiness,
     double? energy,
-    int? level,
+    int? xp,
     DateTime? lastUpdate,
     DateTime? lastInteractionA,
     DateTime? lastInteractionB,
@@ -178,7 +180,7 @@ class PlushModel {
       imageOriginalUrl: this.imageOriginalUrl,
       image2DUrl: image2DUrl ?? this.image2DUrl,
       name: name ?? this.name,
-      level: level ?? this.level,
+      xp: xp ?? this.xp,
       hunger: hunger ?? this.hunger,
       happiness: happiness ?? this.happiness,
       energy: energy ?? this.energy,
