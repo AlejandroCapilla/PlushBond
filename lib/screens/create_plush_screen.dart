@@ -125,7 +125,11 @@ class _CreatePlushScreenState extends ConsumerState<CreatePlushScreen> {
                 const SizedBox(height: 32),
                 TextField(
                   controller: _nameController,
-                  decoration: const InputDecoration(hintText: 'Plush Name'),
+                  textCapitalization: TextCapitalization.words,
+                  maxLength: 15,
+                  decoration: const InputDecoration(
+                    hintText: 'Plush Name',
+                  ),
                 ),
                 const SizedBox(height: 32),
                 ElevatedButton(
