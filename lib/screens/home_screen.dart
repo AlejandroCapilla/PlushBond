@@ -130,6 +130,7 @@ class HomeScreen extends ConsumerWidget {
                   GestureDetector(
                     onTap: () {
                       HapticFeedback.mediumImpact();
+                      ref.read(plushProvider.notifier).squeeze();
                     }, // Trigger bounce
                     child: Hero(
                       tag: 'plush',

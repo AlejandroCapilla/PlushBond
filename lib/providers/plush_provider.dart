@@ -2,21 +2,24 @@ import 'dart:async';
 import 'package:flutter_riverpod/legacy.dart';
 import '../models/plush_model.dart';
 import '../services/firestore_service.dart';
+import '../services/action_notification_service.dart';
 import 'auth_provider.dart';
 
 final plushProvider = StateNotifierProvider<PlushNotifier, PlushModel?>((ref) {
   final firestore = ref.watch(firestoreServiceProvider);
   final user = ref.watch(userModelProvider).value;
-  return PlushNotifier(firestore, user?.uid);
+  final actionNotification = ref.watch(actionNotificationServiceProvider);
+  return PlushNotifier(firestore, actionNotification, user?.uid);
 });
 
 class PlushNotifier extends StateNotifier<PlushModel?> {
   final FirestoreService _firestore;
+  final ActionNotificationService _actionNotification;
   final String? _uid;
   StreamSubscription? _subscription;
   Timer? _decayTimer;
 
-  PlushNotifier(this._firestore, this._uid) : super(null) {
+  PlushNotifier(this._firestore, this._actionNotification, this._uid) : super(null) {
     if (_uid != null) {
       _listenToUserPlush();
     }
@@ -149,6 +152,21 @@ class PlushNotifier extends StateNotifier<PlushModel?> {
       readByPartner: false,
     );
     await _firestore.updateNote(state!.plushId, _uid!, note);
+    
+    final caller = state!.ownerA == _uid ? 'A' : 'B';
+    await _actionNotification.sendSecretNoteNotification(
+      plushUid: state!.plushId,
+      caller: caller,
+    );
+  }
+
+  Future<void> squeeze() async {
+    if (state == null || _uid == null) return;
+    final caller = state!.ownerA == _uid ? 'A' : 'B';
+    await _actionNotification.sendSqueezeNotification(
+      plushUid: state!.plushId,
+      caller: caller,
+    );
   }
 
   Future<void> readNote(String partnerUid) async {

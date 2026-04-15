@@ -9,6 +9,7 @@ import 'screens/onboarding_screen.dart';
 import 'screens/create_join_selector_screen.dart';
 import 'providers/auth_provider.dart';
 import 'providers/plush_provider.dart';
+import 'globals.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -20,6 +21,7 @@ void main() async {
   
   final container = ProviderContainer();
   container.read(onboardingProvider.notifier).state = showOnboarding;
+  container.read(notificationServiceProvider).initializeForegroundListeners();
 
   runApp(UncontrolledProviderScope(
     container: container,
@@ -43,6 +45,7 @@ class PlushBondApp extends ConsumerWidget {
     });
 
     return MaterialApp(
+      navigatorKey: navigatorKey,
       title: 'PlushBond',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.lightTheme,
