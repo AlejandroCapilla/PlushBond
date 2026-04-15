@@ -1,3 +1,4 @@
+import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -7,10 +8,40 @@ import '../providers/auth_provider.dart';
 import '../models/plush_model.dart';
 import '../theme/app_theme.dart';
 
-class HomeScreen extends ConsumerWidget {
+class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});
 
-  void _showNoteDialog(BuildContext context, WidgetRef ref, String? currentText) {
+  @override
+  ConsumerState<HomeScreen> createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends ConsumerState<HomeScreen> {
+  bool _isFeeding = false;
+  bool _isPlaying = false;
+  bool _isCuddling = false;
+  bool _isTouching = false;
+
+  void _triggerAnimation(String type) {
+    setState(() {
+      if (type == 'feed') _isFeeding = true;
+      if (type == 'play') _isPlaying = true;
+      if (type == 'cuddle') _isCuddling = true;
+      if (type == 'touch') _isTouching = true;
+    });
+
+    Future.delayed(const Duration(milliseconds: 1600), () {
+      if (mounted) {
+        setState(() {
+          if (type == 'feed') _isFeeding = false;
+          if (type == 'play') _isPlaying = false;
+          if (type == 'cuddle') _isCuddling = false;
+          if (type == 'touch') _isTouching = false;
+        });
+      }
+    });
+  }
+
+  void _showNoteDialog(BuildContext context, String? currentText) {
     final controller = TextEditingController(text: currentText);
     showDialog(
       context: context,
@@ -48,7 +79,7 @@ class HomeScreen extends ConsumerWidget {
   }
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  Widget build(BuildContext context) {
     final plush = ref.watch(plushProvider);
     final user = ref.watch(userModelProvider).value;
 
@@ -77,6 +108,41 @@ class HomeScreen extends ConsumerWidget {
       if (difference.inHours < 24) {
         myNote = note;
       }
+    }
+
+    Widget plushWidget = Image.network(
+      plush.image2DUrl ?? plush.imageOriginalUrl,
+      height: 250,
+      width: 250,
+      fit: BoxFit.contain,
+      errorBuilder: (_, __, ___) => const Icon(Icons.pets, size: 100),
+    );
+
+    if (_isFeeding) {
+      plushWidget = plushWidget.animate(key: const ValueKey('feed'))
+        .scale(duration: 500.ms, curve: Curves.easeOut, begin: const Offset(1,1), end: const Offset(1.06, 1.02))
+        .then()
+        .scale(duration: 500.ms, curve: Curves.easeInOut, begin: const Offset(1.06, 1.02), end: const Offset(1,1));
+    } else if (_isPlaying) {
+      plushWidget = plushWidget.animate(key: const ValueKey('play'))
+        .moveY(begin: 0, end: -25, duration: 400.ms, curve: Curves.easeOut)
+        .shakeX(hz: 3, amount: 2, duration: 800.ms)
+        .then()
+        .moveY(begin: -25, end: 0, duration: 400.ms, curve: Curves.bounceOut);
+    } else if (_isCuddling) {
+      plushWidget = plushWidget.animate(key: const ValueKey('cuddle'))
+        .scale(duration: 500.ms, curve: Curves.easeInOut, begin: const Offset(1,1), end: const Offset(1.04, 0.96))
+        .shakeX(hz: 2, amount: 1.5, duration: 1000.ms)
+        .then()
+        .scale(duration: 500.ms, curve: Curves.easeInOut, begin: const Offset(1.04, 0.96), end: const Offset(1, 1));
+    } else if (_isTouching) {
+       plushWidget = plushWidget.animate(key: const ValueKey('touch'))
+        .scale(duration: 150.ms, curve: Curves.easeOut, begin: const Offset(1,1), end: const Offset(1.01, 0.99))
+        .then()
+        .scale(duration: 250.ms, curve: Curves.easeInOut, begin: const Offset(1.01, 0.99), end: const Offset(1, 1));
+    } else {
+      plushWidget = plushWidget.animate(key: const ValueKey('idle'), onPlay: (controller) => controller.repeat(reverse: true))
+         .scale(begin: const Offset(1, 1), end: const Offset(1.05, 0.95), duration: 1000.ms, curve: Curves.easeInOut);
     }
 
     return Scaffold(
@@ -111,7 +177,7 @@ class HomeScreen extends ConsumerWidget {
                         ),
                       const SizedBox(width: 8),
                       IconButton(
-                        onPressed: () => _showNoteDialog(context, ref, myNote?.text),
+                        onPressed: () => _showNoteDialog(context, myNote?.text),
                         icon: Icon(myNote == null ? Icons.edit_note : Icons.mark_chat_read, 
                           color: AppTheme.primaryColor, size: 32),
                       ),
@@ -121,7 +187,7 @@ class HomeScreen extends ConsumerWidget {
               ),
             ),
             const Spacer(),
-            // Animated Plush with Notes
+            // Animated Plush with Notes and Particles
             Center(
               child: Stack(
                 clipBehavior: Clip.none,
@@ -130,19 +196,13 @@ class HomeScreen extends ConsumerWidget {
                   GestureDetector(
                     onTap: () {
                       HapticFeedback.mediumImpact();
+                      _triggerAnimation('touch');
                       ref.read(plushProvider.notifier).squeeze();
-                    }, // Trigger bounce
+                    },
                     child: Hero(
                       tag: 'plush',
-                      child: Image.network(
-                        plush.image2DUrl ?? plush.imageOriginalUrl,
-                        height: 250,
-                        width: 250,
-                        fit: BoxFit.contain,
-                        errorBuilder: (_, __, ___) => const Icon(Icons.pets, size: 100),
-                      ),
-                    ).animate(onPlay: (controller) => controller.repeat(reverse: true))
-                     .scale(begin: const Offset(1, 1), end: const Offset(1.05, 0.95), duration: 1000.ms, curve: Curves.easeInOut),
+                      child: plushWidget,
+                    ),
                   ),
 
                   // Partner's Note (Envelope or Post-it)
@@ -198,6 +258,7 @@ class HomeScreen extends ConsumerWidget {
                     child: InkWell(
                       onTap: () {
                         HapticFeedback.mediumImpact();
+                        _triggerAnimation('touch');
                         ref.read(plushProvider.notifier).squeeze();
                         ScaffoldMessenger.of(context).showSnackBar(
                           const SnackBar(content: Text('Touch sent!')),
@@ -252,14 +313,17 @@ class HomeScreen extends ConsumerWidget {
                 children: [
                   _buildActionButton(Icons.restaurant, 'Feed', () {
                     HapticFeedback.lightImpact();
+                    _triggerAnimation('feed');
                     ref.read(plushProvider.notifier).feed();
                   }, AppTheme.secondaryColor),
                   _buildActionButton(Icons.videogame_asset, 'Play', () {
                     HapticFeedback.lightImpact();
+                    _triggerAnimation('play');
                     ref.read(plushProvider.notifier).play();
                   }, AppTheme.tertiaryColor),
                   _buildActionButton(Icons.favorite, 'Cuddle', () {
                     HapticFeedback.lightImpact();
+                    _triggerAnimation('cuddle');
                     ref.read(plushProvider.notifier).cuddle();
                   }, AppTheme.accentColor),
                 ],
