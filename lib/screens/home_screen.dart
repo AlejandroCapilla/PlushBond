@@ -1,5 +1,7 @@
+import 'dart:async';
 import 'dart:math';
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_animate/flutter_animate.dart';
@@ -20,6 +22,83 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   bool _isPlaying = false;
   bool _isCuddling = false;
   bool _isTouching = false;
+
+  DateTime? _lastFeedTime;
+  DateTime? _lastPlayTime;
+  DateTime? _lastCuddleTime;
+  Timer? _cooldownTimer;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadCooldowns();
+    _cooldownTimer = Timer.periodic(const Duration(seconds: 1), (_) {
+      if (mounted) setState(() {});
+    });
+  }
+
+  @override
+  void dispose() {
+    _cooldownTimer?.cancel();
+    super.dispose();
+  }
+
+  Future<void> _loadCooldowns() async {
+    final prefs = await SharedPreferences.getInstance();
+    if (mounted) {
+      setState(() {
+        final feedStr = prefs.getString('lastFeedTime');
+        if (feedStr != null) _lastFeedTime = DateTime.parse(feedStr);
+
+        final playStr = prefs.getString('lastPlayTime');
+        if (playStr != null) _lastPlayTime = DateTime.parse(playStr);
+
+        final cuddleStr = prefs.getString('lastCuddleTime');
+        if (cuddleStr != null) _lastCuddleTime = DateTime.parse(cuddleStr);
+      });
+    }
+  }
+
+  Duration _getCooldown(DateTime? lastActionTime) {
+    if (lastActionTime == null) return Duration.zero;
+    final now = DateTime.now();
+    final difference = now.difference(lastActionTime);
+    const cooldownDuration = Duration(minutes: 15);
+    if (difference < cooldownDuration) {
+      return cooldownDuration - difference;
+    }
+    return Duration.zero;
+  }
+
+  String _formatDuration(Duration duration) {
+    final minutes = duration.inMinutes;
+    final seconds = duration.inSeconds % 60;
+    return '${minutes.toString().padLeft(2, '0')}:${seconds.toString().padLeft(2, '0')}';
+  }
+
+  Future<void> _handleAction(String type, VoidCallback action) async {
+    final prefs = await SharedPreferences.getInstance();
+    final now = DateTime.now();
+
+    if (mounted) {
+      setState(() {
+        if (type == 'feed') {
+          _lastFeedTime = now;
+          prefs.setString('lastFeedTime', now.toIso8601String());
+        } else if (type == 'play') {
+          _lastPlayTime = now;
+          prefs.setString('lastPlayTime', now.toIso8601String());
+        } else if (type == 'cuddle') {
+          _lastCuddleTime = now;
+          prefs.setString('lastCuddleTime', now.toIso8601String());
+        }
+      });
+    }
+
+    HapticFeedback.lightImpact();
+    _triggerAnimation(type);
+    action();
+  }
 
   void _triggerAnimation(String type) {
     setState(() {
@@ -312,20 +391,20 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                 children: [
                   _buildActionButton(Icons.restaurant, 'Feed', () {
-                    HapticFeedback.lightImpact();
-                    _triggerAnimation('feed');
-                    ref.read(plushProvider.notifier).feed();
-                  }, AppTheme.secondaryColor),
+                    _handleAction('feed', () {
+                      ref.read(plushProvider.notifier).feed();
+                    });
+                  }, AppTheme.secondaryColor, _getCooldown(_lastFeedTime)),
                   _buildActionButton(Icons.videogame_asset, 'Play', () {
-                    HapticFeedback.lightImpact();
-                    _triggerAnimation('play');
-                    ref.read(plushProvider.notifier).play();
-                  }, AppTheme.tertiaryColor),
+                    _handleAction('play', () {
+                      ref.read(plushProvider.notifier).play();
+                    });
+                  }, AppTheme.tertiaryColor, _getCooldown(_lastPlayTime)),
                   _buildActionButton(Icons.favorite, 'Cuddle', () {
-                    HapticFeedback.lightImpact();
-                    _triggerAnimation('cuddle');
-                    ref.read(plushProvider.notifier).cuddle();
-                  }, AppTheme.accentColor),
+                    _handleAction('cuddle', () {
+                      ref.read(plushProvider.notifier).cuddle();
+                    });
+                  }, AppTheme.accentColor, _getCooldown(_lastCuddleTime)),
                 ],
               ),
             ),
@@ -401,36 +480,54 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     );
   }
 
-  Widget _buildActionButton(IconData icon, String label, VoidCallback onTap, Color color) {
-    return Column(
-      children: [
-        InkWell(
-          onTap: onTap,
-          borderRadius: BorderRadius.circular(50),
-          child: Container(
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: color,
-              shape: BoxShape.circle,
-              boxShadow: [
-                BoxShadow(
-                  color: color.withOpacity(0.3),
-                  blurRadius: 8,
-                  offset: const Offset(0, 4),
-                ),
-              ],
+  Widget _buildActionButton(IconData icon, String label, VoidCallback onTap, Color color, Duration cooldown) {
+    final bool isOnCooldown = cooldown > Duration.zero;
+
+    Widget buttonContent = Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: isOnCooldown ? Colors.grey.shade400 : color,
+        shape: BoxShape.circle,
+        boxShadow: [
+          if (!isOnCooldown)
+            BoxShadow(
+              color: color.withOpacity(0.3),
+              blurRadius: 8,
+              offset: const Offset(0, 4),
             ),
-            child: Icon(icon, color: Colors.white, size: 28),
-          ),
-        ).animate(onPlay: (c) => c.repeat(reverse: true))
+        ],
+      ),
+      child: Icon(icon, color: Colors.white, size: 28),
+    );
+
+    Widget inkWell = InkWell(
+      onTap: isOnCooldown ? null : onTap,
+      borderRadius: BorderRadius.circular(50),
+      child: buttonContent,
+    );
+
+    if (!isOnCooldown) {
+      inkWell = inkWell.animate(onPlay: (c) => c.repeat(reverse: true))
          .scale(
            begin: const Offset(1, 1),
            end: const Offset(1.1, 1.1),
            duration: 2000.ms,
            curve: Curves.easeInOut,
-         ),
+         );
+    }
+
+    return Column(
+      children: [
+        inkWell,
         const SizedBox(height: 12),
-        Text(label, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500)),
+        Text(
+          isOnCooldown ? _formatDuration(cooldown) : label,
+          style: TextStyle(
+            fontSize: 14, 
+            fontWeight: FontWeight.w500,
+            color: isOnCooldown ? Colors.grey.shade600 : null,
+          ),
+        ),
       ],
     );
   }
