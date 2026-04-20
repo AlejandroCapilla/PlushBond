@@ -35,6 +35,55 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     _cooldownTimer = Timer.periodic(const Duration(seconds: 1), (_) {
       if (mounted) setState(() {});
     });
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _checkNotificationPermissions();
+    });
+  }
+
+  Future<void> _checkNotificationPermissions() async {
+    final notificationService = ref.read(notificationServiceProvider);
+    final isGranted = await notificationService.isPermissionGranted();
+    
+    if (!isGranted) {
+      if (!mounted) return;
+      
+      final prefs = await SharedPreferences.getInstance();
+      final hasSeenModal = prefs.getBool('hasSeenNotificationModal') ?? false;
+
+      if (!hasSeenModal) {
+        showDialog(
+          context: context,
+          barrierDismissible: false,
+          builder: (ctx) => AlertDialog(
+            title: const Text('¡Mantente conectado!'),
+            content: const Text('Para saber cuando tu pareja interactúa con el peluche o te envía notas, te sugerimos activar las notificaciones. ¿Deseas permitirlas ahora?'),
+            actions: [
+              TextButton(
+                onPressed: () {
+                  prefs.setBool('hasSeenNotificationModal', true);
+                  Navigator.pop(ctx);
+                },
+                child: const Text('Ahora no'),
+              ),
+              ElevatedButton(
+                onPressed: () async {
+                  prefs.setBool('hasSeenNotificationModal', true);
+                  Navigator.pop(ctx);
+                  await notificationService.requestPermissions();
+                  
+                  final user = ref.read(authStateProvider).value;
+                  if (user != null) {
+                    notificationService.updateUserFcmToken(user.uid);
+                  }
+                },
+                child: const Text('Permitir'),
+              ),
+            ],
+          ),
+        );
+      }
+    }
   }
 
   @override

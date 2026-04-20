@@ -100,6 +100,16 @@ class NotificationService {
     });
   }
 
+  Future<NotificationSettings> getNotificationSettings() async {
+    return await _fcm.getNotificationSettings();
+  }
+
+  Future<bool> isPermissionGranted() async {
+    NotificationSettings settings = await getNotificationSettings();
+    return settings.authorizationStatus == AuthorizationStatus.authorized || 
+           settings.authorizationStatus == AuthorizationStatus.provisional;
+  }
+
   Future<void> requestPermissions() async {
     NotificationSettings settings = await _fcm.requestPermission(
       alert: true,
@@ -127,7 +137,6 @@ class NotificationService {
   }
 
   Future<void> updateUserFcmToken(String uid) async {
-    await requestPermissions();
     String? token = await getFcmToken();
     if (token != null) {
       final plush = await _firestoreService.getPlushForUser(uid);
