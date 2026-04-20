@@ -29,23 +29,17 @@ class PlushNotifier extends StateNotifier<PlushModel?> {
     _subscription?.cancel();
     _subscription = _firestore.streamPlushForUser(_uid!).listen((plush) {
       if (plush != null) {
-        bool needsUpdate = false;
-        PlushModel processedPlush = plush;
-
-        // Calculate decay if it's the first time or if significant time has passed
         if (state == null) {
-          processedPlush = _calculateDecay(plush);
-          if (processedPlush != plush) {
-            needsUpdate = true;
-          }
           _startDecayTimer();
         }
 
-        state = processedPlush;
+        // Always apply decay to the incoming snapshot to display correct local state
+        // even if another user just updated it, as they might have interacted.
+        // We do not sync this back to firestore automatically to avoid overwriting
+        // fresh server updates with decayed local cache data.
+        final processedPlush = _calculateDecay(plush);
 
-        if (needsUpdate) {
-          _syncToFirestore(processedPlush);
-        }
+        state = processedPlush;
       } else {
         state = null;
         _decayTimer?.cancel();
@@ -76,11 +70,6 @@ class PlushNotifier extends StateNotifier<PlushModel?> {
       lastUpdate: now,
     );
   }
-
-  Future<void> _syncToFirestore(PlushModel plush) async {
-    await _firestore.updatePlush(plush);
-  }
-
 
   void _startDecayTimer() {
     _decayTimer?.cancel();
