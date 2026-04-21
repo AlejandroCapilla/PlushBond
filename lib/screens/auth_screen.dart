@@ -4,6 +4,8 @@ import '../providers/auth_provider.dart';
 import '../models/user_model.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
+enum AuthMode { login, signup, resetPassword }
+
 class AuthScreen extends ConsumerStatefulWidget {
   const AuthScreen({super.key});
 
@@ -15,7 +17,7 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   final _nameController = TextEditingController();
-  bool _isLogin = true;
+  AuthMode _authMode = AuthMode.login;
   bool _isLoading = false;
 
   Future<void> _submit() async {
@@ -24,9 +26,9 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
     final firestoreService = ref.read(firestoreServiceProvider);
 
     try {
-      if (_isLogin) {
+      if (_authMode == AuthMode.login) {
         await authService.signIn(_emailController.text, _passwordController.text);
-      } else {
+      } else if (_authMode == AuthMode.signup) {
         final creds = await authService.signUp(_emailController.text, _passwordController.text);
         final newUser = UserModel(
           uid: creds.user!.uid,
@@ -35,6 +37,17 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
           createdAt: DateTime.now(),
         );
         await firestoreService.createUser(newUser);
+      } else if (_authMode == AuthMode.resetPassword) {
+        if (_emailController.text.isEmpty) {
+          throw FirebaseAuthException(code: 'invalid-email', message: 'Please enter your email.');
+        }
+        await authService.sendPasswordResetEmail(_emailController.text);
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Password reset link sent to your email!')),
+          );
+          setState(() => _authMode = AuthMode.login);
+        }
       }
     } on FirebaseAuthException catch (e) {
       if (mounted) {
@@ -107,7 +120,15 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
                 style: TextStyle(fontSize: 16, color: Colors.grey),
               ),
               const SizedBox(height: 48),
-              if (!_isLogin) ...[
+              if (_authMode == AuthMode.resetPassword) ...[
+                const Text(
+                  'Enter your email to receive a password reset link',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(fontSize: 14, color: Colors.grey),
+                ),
+                const SizedBox(height: 24),
+              ],
+              if (_authMode == AuthMode.signup) ...[
                 TextField(
                   controller: _nameController,
                   decoration: const InputDecoration(hintText: 'Display Name'),
@@ -117,25 +138,58 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
               TextField(
                 controller: _emailController,
                 decoration: const InputDecoration(hintText: 'Email'),
+                keyboardType: TextInputType.emailAddress,
               ),
-              const SizedBox(height: 16),
-              TextField(
-                controller: _passwordController,
-                decoration: const InputDecoration(hintText: 'Password'),
-                obscureText: true,
-              ),
+              if (_authMode != AuthMode.resetPassword) ...[
+                const SizedBox(height: 16),
+                TextField(
+                  controller: _passwordController,
+                  decoration: const InputDecoration(hintText: 'Password'),
+                  obscureText: true,
+                ),
+                if (_authMode == AuthMode.login)
+                  Align(
+                    alignment: Alignment.centerRight,
+                    child: TextButton(
+                      onPressed: () => setState(() => _authMode = AuthMode.resetPassword),
+                      child: Text(
+                        'Forgot Password?',
+                        style: TextStyle(
+                          color: Theme.of(context).primaryColor,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                  ),
+              ],
               const SizedBox(height: 32),
               _isLoading
                   ? const CircularProgressIndicator()
                   : ElevatedButton(
                       onPressed: _submit,
-                      child: Text(_isLogin ? 'Login' : 'Register'),
+                      child: Text(_authMode == AuthMode.login
+                          ? 'Login'
+                          : _authMode == AuthMode.signup
+                              ? 'Register'
+                              : 'Send Reset Link'),
                     ),
               TextButton(
-                onPressed: () => setState(() => _isLogin = !_isLogin),
-                child: Text(_isLogin
+                onPressed: () {
+                  setState(() {
+                    if (_authMode == AuthMode.resetPassword) {
+                      _authMode = AuthMode.login;
+                    } else {
+                      _authMode = _authMode == AuthMode.login
+                          ? AuthMode.signup
+                          : AuthMode.login;
+                    }
+                  });
+                },
+                child: Text(_authMode == AuthMode.login
                     ? 'Need an account? Register'
-                    : 'Have an account? Login'),
+                    : _authMode == AuthMode.signup
+                        ? 'Have an account? Login'
+                        : 'Back to Login'),
               ),
             ],
           ),
