@@ -317,80 +317,85 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             const Spacer(),
             // Animated Plush with Notes and Particles
             Center(
-              child: Stack(
-                clipBehavior: Clip.none,
-                alignment: Alignment.center,
-                children: [
-                  GestureDetector(
-                    onTap: () {
-                      HapticFeedback.mediumImpact();
-                      _triggerAnimation('touch');
-                      ref.read(plushProvider.notifier).squeeze();
-                    },
-                    child: Hero(
-                      tag: 'plush',
-                      child: plushWidget,
-                    ),
-                  ),
-
-                  // Partner's Note (Envelope or Post-it)
-                  if (partnerNote != null)
-                    Positioned(
-                      top: -40,
-                      right: -20,
-                      child: GestureDetector(
-                        onTap: () {
-                          if (!partnerNote!.readByPartner) {
-                            ref.read(plushProvider.notifier).readNote(partnerUid!);
-                          }
-                          // Show the note text in a dialog too
-                          showDialog(
-                            context: context,
-                            builder: (context) => AlertDialog(
-                              backgroundColor: const Color(0xFFFFF9C4), // Post-it Yellow
-                              shape: const RoundedRectangleBorder(),
-                              content: Column(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  const Icon(Icons.push_pin, color: Colors.redAccent),
-                                  const SizedBox(height: 16),
-                                  Text(
-                                    partnerNote!.text,
-                                    style: const TextStyle(
-                                      fontFamily: 'Roboto', // Ideally a handwriting font
-                                      fontSize: 20,
-                                      fontWeight: FontWeight.w500,
-                                    ),
-                                    textAlign: TextAlign.center,
-                                  ),
-                                  const SizedBox(height: 16),
-                                  Text(
-                                    'Shared ${partnerNote.timestamp.hour}:${partnerNote.timestamp.minute.toString().padLeft(2, '0')}',
-                                    style: TextStyle(fontSize: 12, color: Colors.grey[700]),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          );
-                        },
-                        child: _buildNoteWidget(partnerNote).animate()
-                          .shake(duration: 500.ms)
-                          .scale(duration: 300.ms, curve: Curves.bounceIn),
+              child: SizedBox(
+                width: 350,
+                height: 350,
+                child: Stack(
+                  clipBehavior: Clip.none,
+                  alignment: Alignment.center,
+                  children: [
+                    GestureDetector(
+                      onTap: () {
+                        HapticFeedback.mediumImpact();
+                        _triggerAnimation('touch');
+                        ref.read(plushProvider.notifier).squeeze();
+                      },
+                      child: Hero(
+                        tag: 'plush',
+                        child: plushWidget,
                       ),
                     ),
 
-                  // Touch Button
+                    // Partner's Note (Envelope or Post-it)
+                    if (partnerNote != null)
+                      Positioned(
+                        top: 10, // Adjusted for 350x350 stack (Plush top is at 50, so 10 is 40px above)
+                        right: 30, // Adjusted (Plush right is at 300, so 30 is 20px outside)
+                        child: GestureDetector(
+                          behavior: HitTestBehavior.opaque,
+                          onTap: () {
+                            if (!partnerNote!.readByPartner) {
+                              ref.read(plushProvider.notifier).readNote(partnerUid!);
+                            }
+                            // Show the note text in a dialog too
+                            showDialog(
+                              context: context,
+                              builder: (context) => AlertDialog(
+                                backgroundColor: const Color(0xFFFFF9C4), // Post-it Yellow
+                                shape: const RoundedRectangleBorder(),
+                                content: Column(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    const Icon(Icons.push_pin, color: Colors.redAccent),
+                                    const SizedBox(height: 16),
+                                    Text(
+                                      partnerNote!.text,
+                                      style: const TextStyle(
+                                        fontFamily: 'Roboto', // Ideally a handwriting font
+                                        fontSize: 20,
+                                        fontWeight: FontWeight.w500,
+                                      ),
+                                      textAlign: TextAlign.center,
+                                    ),
+                                    const SizedBox(height: 16),
+                                    Text(
+                                      'Shared ${partnerNote.timestamp.hour}:${partnerNote.timestamp.minute.toString().padLeft(2, '0')}',
+                                      style: TextStyle(fontSize: 12, color: Colors.grey[700]),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            );
+                          },
+                          child: _buildNoteWidget(partnerNote).animate()
+                            .shake(duration: 500.ms)
+                            .scale(duration: 300.ms, curve: Curves.bounceIn),
+                        ),
+                      ),
+
                   Positioned(
-                    bottom: 0,
-                    left: -20,
+                    bottom: 40, // Adjusted to be inside 350x350 (Plush bottom is at 300)
+                    left: 30, // Adjusted (Plush left is at 50, so 30 is 20px outside)
                     child: InkWell(
                       onTap: () {
                         HapticFeedback.mediumImpact();
                         _triggerAnimation('touch');
                         ref.read(plushProvider.notifier).squeeze();
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text('Touch sent!')),
-                        );
+                        if (mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(content: Text('Touch sent!')),
+                          );
+                        }
                       },
                       borderRadius: BorderRadius.circular(30),
                       child: Container(
@@ -413,6 +418,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 ],
               ),
             ),
+          ),
             const Spacer(),
             // Status Bars
             Padding(
@@ -478,9 +484,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       );
     } else {
       return Container(
-        width: 80,
+        width: 88,
         height: 80,
-        padding: const EdgeInsets.all(8),
+        padding: const EdgeInsets.only(left: 4, right: 4, top: 4, bottom: 4),
         decoration: const BoxDecoration(
           color: Color(0xFFFFF176), // Post-it Yellow
           boxShadow: [
@@ -489,11 +495,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         ),
         child: Column(
           children: [
-            const Icon(Icons.push_pin, size: 16, color: Colors.redAccent),
-            const SizedBox(height: 4),
+            const Icon(Icons.push_pin, size: 12, color: Colors.redAccent),
+            const SizedBox(height: 2),
             Text(
               note.text,
-              maxLines: 2,
+              maxLines: 4,
               overflow: TextOverflow.ellipsis,
               style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold),
               textAlign: TextAlign.center,
