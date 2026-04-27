@@ -55,7 +55,7 @@ class PlushNotifier extends StateNotifier<PlushModel?> {
     if (hoursPassed < 0.01) return plush; // Avoid unnecessary updates for very small intervals
 
     // Decay rates per hour
-    const hungerRate = 4.0;
+    const hungerRate = 3.0;
     const energyRate = 3.5;
     const happinessRate = 3.0;
 
@@ -122,7 +122,7 @@ class PlushNotifier extends StateNotifier<PlushModel?> {
   }
 
   Future<void> feed() async {
-    await _applyInteraction(hungerAdd: 20, energyAdd: 10, xpAdd: 15);
+    await _applyInteraction(hungerAdd: 30, energyAdd: 30, xpAdd: 15);
   }
 
   Future<void> play() async {
@@ -130,7 +130,7 @@ class PlushNotifier extends StateNotifier<PlushModel?> {
   }
 
   Future<void> cuddle() async {
-    await _applyInteraction(happinessAdd: 10, energyAdd: 10, xpAdd: 15);
+    await _applyInteraction(happinessAdd: 20, energyAdd: 10, xpAdd: 15);
   }
 
   Future<void> sendNote(String text) async {
